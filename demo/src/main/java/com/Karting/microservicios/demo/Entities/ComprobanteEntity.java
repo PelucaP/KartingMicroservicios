@@ -6,19 +6,27 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-
-@Entity
 @Data
 @AllArgsConstructor
+@Entity
 @NoArgsConstructor
-@Table(name="reserva")
-public class ReservaEntity {
+@Table(name="comprobante")
+public class ComprobanteEntity {
+    public enum TipoReserva{
+        MINUTOS10,
+        MINUTOS20,
+        MINUTOS30,
+    }
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true,nullable= false)
     private Long id;
-    private Date fecha;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tiporeserva")
+    private TipoReserva tipoReserva;
     private String email;
-    private String nombre;
+
 }

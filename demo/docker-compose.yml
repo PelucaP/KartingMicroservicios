@@ -1,0 +1,44 @@
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+
+services:
+  db:
+    container_name: karting-postgres
+    image: postgres
+    deploy:
+      restart_policy:
+        condition: on-failure
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend1:
+    image: backend:latest
+    ports:
+      - "8090:8090"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - SPRING_SQL_INIT_MODE=always  # This instance will run the SQL script
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend-network
