@@ -1,4 +1,4 @@
-package com.Karting.microservicios.demo.Entities;
+package com.example.demo.Entities;
 
 
 import jakarta.persistence.*;
@@ -43,11 +43,3 @@ public class ReservaEntity {
     @Column(name = "cantidadpersonas")
     private int cantidadPersonas;
 }
-/*
-    @ElementCollection
-    private List<String> invitados;
-    @ElementCollection
-    private List<String> emails;
-
-}
- */

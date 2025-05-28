@@ -1,22 +1,17 @@
-package com.Karting.microservicios.demo.Servicios;
+package com.example.demo.Services;
 
-import jakarta.mail.Message;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-
-
 @Service
 @RequiredArgsConstructor
 public class EmailService {
     private final JavaMailSender mailSender;
-    private final ComprobanteService comprobanteService;
-
+    private final ReservaService reservaService;
 
     public void enviarEmail(String toEmail, String subject, String texto) {
         try{
@@ -28,7 +23,8 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(texto, true);
 
-            byte[] pdf = comprobanteService.crearComprobante();
+
+            byte[] pdf = reservaService.crearComprobante();
             ByteArrayResource resource = new ByteArrayResource(pdf);
             helper.addAttachment("Comprobante.pdf", resource);
 
