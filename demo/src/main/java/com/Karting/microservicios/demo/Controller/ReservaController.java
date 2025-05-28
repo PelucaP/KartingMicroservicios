@@ -1,5 +1,6 @@
 package com.Karting.microservicios.demo.Controller;
 
+import com.Karting.microservicios.demo.DTO.FechaEntreReservaRequest;
 import com.Karting.microservicios.demo.Entities.ReservaEntity;
 import com.Karting.microservicios.demo.Repository.ReservaRepository;
 import com.Karting.microservicios.demo.Servicios.ReservaService;
@@ -33,5 +34,15 @@ public class ReservaController {
              return ResponseEntity.ok(reservas);
          }
     }
+
+    @PostMapping("/entrefecha")
+    public ResponseEntity<?> buscarReservasEntreFecha(@RequestBody FechaEntreReservaRequest fechas){
+        List<ReservaEntity> reservas = reservaService.reservasBetweenDate(fechas.getFechaInicio(),fechas.getFechaFin());
+        if(reservas.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(reservas);
+    }
+
 
 }

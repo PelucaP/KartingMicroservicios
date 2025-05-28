@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Data
@@ -16,9 +17,25 @@ import java.util.Date;
 public class ReservaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(unique = true,nullable= false)
+    @Column(unique = true, nullable = false)
     private Long id;
-    private Date fecha;
+
+    @Column(name = "fechainicio")
+    private Date fechaInicio;
+
+    @Column(name = "fechafin")
+    private Date fechaFin;
+
     private String email;
-    private String nombre;
+    @Column(name = "duenoreserva")
+    private String duenoReserva;
+
+/*
+    @ElementCollection
+    private List<String> invitados;
+    @ElementCollection
+    private List<String> emails;
+
+}
+ */
 }

@@ -5,6 +5,7 @@ import com.Karting.microservicios.demo.Repository.ReservaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -27,6 +28,13 @@ public class ReservaService {
         return reservaRepository.save(reserva);
     }
 
-    
+    /*
+    public double descuentoPersona(ReservaEntity reserva) {
 
+    }
+*/
+
+    public List<ReservaEntity> reservasBetweenDate(Date inicio, Date fin) {
+        return reservaRepository.findByfechaInicioBetween(inicio, fin);
+    }
 }

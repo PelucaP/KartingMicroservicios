@@ -18,7 +18,6 @@ public class ComprobanteEntity {
         MINUTOS30,
     }
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true,nullable= false)
@@ -27,6 +26,10 @@ public class ComprobanteEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "tiporeserva")
     private TipoReserva tipoReserva;
+
+    @Column(name="totalvisita")
+    private double totalVisita;
+
     private String email;
 
 }
