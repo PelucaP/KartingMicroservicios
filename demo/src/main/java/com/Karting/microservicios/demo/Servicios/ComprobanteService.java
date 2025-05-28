@@ -13,9 +13,7 @@ import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.util.Date;
+
 
 @Service
 public class ComprobanteService {
@@ -46,10 +44,4 @@ public class ComprobanteService {
     }
 
 
-    /*
-    public byte[] crearReporteVueltas(Date inicio, Date termino){
-
-    }
-
-     */
 }

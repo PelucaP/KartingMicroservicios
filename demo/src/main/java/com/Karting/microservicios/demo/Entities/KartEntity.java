@@ -16,7 +16,6 @@ public class KartEntity {
         EN_MANTENCION,
         NO_DISPONIBLE
     }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true,nullable= false)

@@ -15,6 +15,11 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name="reserva")
 public class ReservaEntity {
+    public enum tipoReserva {
+        MINUTOS10,
+        MINUTOS20,
+        MINUTOS30,
+    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
@@ -29,6 +34,15 @@ public class ReservaEntity {
     private String email;
     @Column(name = "duenoreserva")
     private String duenoReserva;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tiporeserva")
+    private tipoReserva tipoReserva;
+
+    private double total;
+
+    @Column(name="cantidadpersonas")
+    private int cantidadPersonas;
 
 /*
     @ElementCollection

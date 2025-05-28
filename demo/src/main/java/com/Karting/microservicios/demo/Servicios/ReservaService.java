@@ -37,4 +37,5 @@ public class ReservaService {
     public List<ReservaEntity> reservasBetweenDate(Date inicio, Date fin) {
         return reservaRepository.findByfechaInicioBetween(inicio, fin);
     }
+
 }
