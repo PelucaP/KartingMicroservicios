@@ -24,15 +24,25 @@ public class ReservaService {
     public List<ReservaEntity> getAllReservas() {
         return reservaRepository.findAll();
     }
+
     public ReservaEntity createReserva(ReservaEntity reserva) {
+        if (reserva.getFechaInicio() == null || reserva.getFechaFin() == null) {
+            throw new IllegalArgumentException("La fecha de inicio y fin de la reserva no pueden ser nulas.");
+        }
+        if (reserva.getFechaInicio().after(reserva.getFechaFin()) || reserva.getFechaInicio().equals(reserva.getFechaFin())) {
+            throw new IllegalArgumentException("La fecha de inicio debe ser anterior a la fecha de fin y no pueden ser iguales.");
+        }
+        List<ReservaEntity> conflictingReservas = reservaRepository.findConflictingReservas(
+                reserva.getFechaInicio(),
+                reserva.getFechaFin()
+        );
+        if (!conflictingReservas.isEmpty()) {
+            // A clash is found
+            throw new IllegalStateException("La franja horaria solicitada para la reserva ya está ocupada o se superpone con otra reserva.");
+        }
+        // No conflicts, proceed to save
         return reservaRepository.save(reserva);
     }
-
-    /*
-    public double descuentoPersona(ReservaEntity reserva) {
-
-    }
-*/
 
     public List<ReservaEntity> reservasBetweenDate(Date inicio, Date fin) {
         return reservaRepository.findByfechaInicioBetween(inicio, fin);
