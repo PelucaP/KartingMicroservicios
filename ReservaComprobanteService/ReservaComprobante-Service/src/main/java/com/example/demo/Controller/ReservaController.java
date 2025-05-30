@@ -44,11 +44,16 @@ public class ReservaController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/gfg")
+    public ResponseEntity<String> getAnonymous() {
+        return ResponseEntity.ok("Welcome to GeeksforGeeks");
+    }
+    /*
     @GetMapping("/dsctopersonas")
     public ResponseEntity<?> obtenerDsctoPersonas() {
         RestTemplate restTemplate = new RestTemplate();
 
     }
-
+     */
 
 }
