@@ -15,6 +15,10 @@ spring:
           uri: lb://reservacomprobante-service  # This uses Eureka for discovery and load balancing
           predicates:
             - Path=/api/reserva/**  # This matches your actual controller paths
+        - id: descuentopersonas-service
+          uri: lb://descuentopersonas-service  # This uses Eureka for discovery and load balancing
+          predicates:
+            - Path=/api/descuento/**  # This matches your actual controller paths
 
 eureka:
   client:

@@ -24,8 +24,6 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class ReporteService {
     private final ReservaRepository reservaRepository;
-    private final ComprobanteRepository comprobanteRepository; // Not used in this specific method but kept as per original
-
 
     private void processReservationsForMonthlyIncome(List<ReservaEntity> reservas,
                                                      ReservaEntity.tipoReserva tipo,

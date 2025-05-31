@@ -1,4 +1,9 @@
 # Correct YAML indentation
+
+server:
+  port: 9090
+
+  
 eureka:
   client:
     serviceUrl:
@@ -30,6 +35,3 @@ spring:
           auth: true
           starttls:
             enable: true
-
-server:
-  port: 9090
