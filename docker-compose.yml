@@ -1,0 +1,32 @@
+
+services:
+  config-server:
+    build: ./ConfigServer-Service/Config-server
+    ports:
+      - "8888:8888"
+    networks:
+      - karting-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/eureka-service/default || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  eureka-server:
+    build: ./eureka-server
+    ports:
+      - "8761:8761"
+    depends_on:
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=3000
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=20
+    networks:
+      - karting-network
+
+networks:
+  karting-network:
+    driver: bridge

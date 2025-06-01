@@ -9,10 +9,19 @@ spring:
   cloud:
     config:
       server:
+        health:
+          enabled: true
         composite:
           - type: git
             uri: https://github.com/PelucaP/KartingMicroservicios
             default-label: main
             search-paths: '*'
-          - type: native
-            search-locations: file:///home/peluca/Desktop/Tingeso/KartingMicroservicios/config-data
+            
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
