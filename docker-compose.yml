@@ -1,4 +1,3 @@
-
 services:
   config-server:
     build: ./ConfigServer-Service/Config-server
@@ -49,15 +48,47 @@ services:
     networks:
       - karting-network
 
-  # Either remove this service if not needed yet, or properly configure it
-  # reservacomprobante-service:
-  #   build: ./ReservaComprobanteService/ReservaComprobante-Service
-  #   ports:
-  #     - "9090:9090"
-  #   networks:
-  #     - karting-network
+  reservacomprobante-service:
+    build: ./ReservaComprobanteService/ReservaComprobante-Service
+    ports:
+      - "9090:9090"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      reservacomprobante-db:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - karting-network
 
-# This should be at the root level, not nested inside a service
+  reservacomprobante-db:
+    container_name: reservacomprobante-db
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - reservacomprobante-data:/var/lib/postgresql/data
+    networks:
+      - karting-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
 networks:
   karting-network:
     driver: bridge
+
+volumes:
+  reservacomprobante-data:
