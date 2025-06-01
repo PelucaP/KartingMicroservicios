@@ -84,6 +84,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    
+  descuentopersonas-service:
+    build: ./descuentopersonas-service
+    ports:
+      - "9091:9091"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - karting-network
 
 
 networks:
