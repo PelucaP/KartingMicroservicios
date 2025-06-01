@@ -7,7 +7,7 @@ services:
     networks:
       - karting-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/eureka-service/default || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +26,38 @@ services:
       - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=20
     networks:
       - karting-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8085:8085"
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - karting-network
+
+  # Either remove this service if not needed yet, or properly configure it
+  # reservacomprobante-service:
+  #   build: ./ReservaComprobanteService/ReservaComprobante-Service
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - karting-network
+
+# This should be at the root level, not nested inside a service
 networks:
   karting-network:
     driver: bridge
