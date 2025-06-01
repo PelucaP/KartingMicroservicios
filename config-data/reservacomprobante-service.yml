@@ -13,7 +13,7 @@ spring:
   application:
     name: reservacomprobante-service
   datasource:
-    url: jdbc:postgresql://reservacomprobante-db::5432/postgres
+    url: jdbc:postgresql://reservacomprobante-db:5432/postgres
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
