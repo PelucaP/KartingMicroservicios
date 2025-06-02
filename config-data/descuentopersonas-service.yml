@@ -1,11 +1,12 @@
 server:
-  port: 9091
+  port: ${PORT:0}
 
 eureka:
   client:
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
   instance:
+    instance_id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
     lease-renewal-interval-in-seconds: 10
     health-check-url-path: /actuator/health
 

@@ -1,13 +1,14 @@
 # Correct YAML indentation
 
 server:
-  port: 9090
+  port: ${PORT:0}
 
-  
 eureka:
   client:
     serviceUrl:
       defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    instance_id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
 spring:
   application:

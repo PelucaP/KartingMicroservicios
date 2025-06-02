@@ -20,4 +20,5 @@ public class DescuentoController {
         double descuento = descuentoService.descuento(personas);
         return ResponseEntity.ok().body(descuento);
     }
+
 }
