@@ -25,7 +25,8 @@ public class ReservaController {
     @PostMapping("/crear")
     public ResponseEntity<?> createReserva(@RequestBody ReservaEntity reserva) {
         ReservaEntity nuevaReserva = reservaService.createReserva(reserva);
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevaReserva);
+        emailService.enviarEmail(reserva.getEmail(),"Buenas tardes","Estimado " + reserva.getDuenoReserva() + " Aquí esta su comprobante",nuevaReserva);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/listar")
@@ -40,7 +41,7 @@ public class ReservaController {
 
     @PostMapping("/enviar")
     public ResponseEntity<?> enviarComprobante(@RequestBody ReservaEntity reserva) {
-        emailService.enviarEmail(reserva.getEmail(),"Buenas tardes","Estimado " + reserva.getDuenoReserva() + " Aquí esta su comprobante");
+        emailService.enviarEmail(reserva.getEmail(),"Buenas tardes","Estimado " + reserva.getDuenoReserva() + " Aquí esta su comprobante",reserva);
         return ResponseEntity.ok().build();
     }
 
