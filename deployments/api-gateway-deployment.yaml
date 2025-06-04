@@ -27,6 +27,13 @@ spec:
           value: optional:configserver:http://config-server:8888
         - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
           value: http://eureka-server:8761/eureka/
+        # Add these Eureka instance settings to fix hostname issues
+        - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+          value: "true"
+        - name: EUREKA_INSTANCE_HOSTNAME
+          value: "api-gateway"
+        - name: EUREKA_INSTANCE_INSTANCEID
+          value: "api-gateway:${HOSTNAME}"
         resources:
           requests:
             memory: "256Mi"

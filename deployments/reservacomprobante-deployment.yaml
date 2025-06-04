@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reservacomprobante-service
+  labels:
+    app: reservacomprobante-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reservacomprobante-service
+  template:
+    metadata:
+      labels:
+        app: reservacomprobante-service
+    spec:
+      containers:
+      - name: reservacomprobante-service
+        image: pelucap/microservicios:reservacomprobante-service
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 9090
+        env:
+        # Config and Eureka settings
+        - name: SPRING_CLOUD_CONFIG_URI
+          value: http://config-server:8888
+        - name: SPRING_CONFIG_IMPORT
+          value: optional:configserver:http://config-server:8888
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: http://eureka-server:8761/eureka/
+        # Add these Eureka instance settings to fix hostname issues
+        - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+          value: "true"
+        - name: EUREKA_INSTANCE_HOSTNAME
+          value: "reservacomprobante-service"
+        - name: EUREKA_INSTANCE_INSTANCEID
+          value: "reservacomprobante-service:${HOSTNAME}"
+          
+        # Database connection - using secrets
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://reservacomprobante-db:5432/postgres
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: password
+              
+        # Email settings - using secrets
+        - name: SPRING_MAIL_HOST
+          value: smtp.gmail.com
+        - name: SPRING_MAIL_PORT
+          value: "587"
+        - name: SPRING_MAIL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: email-credentials
+              key: username
+        - name: SPRING_MAIL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: email-credentials
+              key: password
+        - name: SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH
+          value: "true"
+        - name: SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE
+          value: "true"
