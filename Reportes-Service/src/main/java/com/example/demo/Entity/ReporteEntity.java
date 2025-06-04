@@ -1,5 +1,4 @@
-package com.example.demo.Entities;
-
+package com.example.demo.Entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,23 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
-import java.util.List;
 
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name="reserva")
-public class ReservaEntity {
-    public enum tipoReserva {
-        MINUTOS10,
-        MINUTOS20,
-        MINUTOS30,
-    }
+@Table(name="reportes")
+public class ReporteEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
-    private Long id;
+    Long id_reporte;
 
     @Column(name = "fechainicio")
     private Date fechaInicio;
@@ -31,14 +24,12 @@ public class ReservaEntity {
     @Column(name = "fechafin")
     private Date fechaFin;
 
-    private String email;
-    @Column(name = "duenoreserva")
-    private String duenoReserva;
+    // 1 = 10 minutos y vueltas, 2 = 15 y 15, 3 = 20 y 20.
+    @Column(name="tiporeserva")
+    private int tipoReserva;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tiporeserva")
-    private tipoReserva tipoReserva;
     private double total;
+
     @Column(name = "cantidadpersonas")
     private int cantidadPersonas;
 }
