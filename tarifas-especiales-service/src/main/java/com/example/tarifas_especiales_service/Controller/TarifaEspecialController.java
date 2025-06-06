@@ -25,8 +25,8 @@ public class TarifaEspecialController {
         return ResponseEntity.ok(tarifaEspecialService.listarTarifasEspecial());
     }
     
-    @GetMapping("/obtenertarifa")
-    public ResponseEntity<?> obtenerTarifa(@RequestParam Long id){
+    @GetMapping("/obtenertarifa/{id}")
+    public ResponseEntity<?> obtenerTarifa(@PathVariable Long id){
         return ResponseEntity.ok(tarifaEspecialService.buscarTarifaEspecialPorId(id));
     }
 

@@ -30,7 +30,7 @@ spring:
         - id: descuentos-frecuencia-service
           uri: lb://descuentos-frecuencia-service
           predicates:
-            - Path=/api/frecuencia/**
+            - Path=/api/descuentofrecuencia/**
 
 eureka:
   instance:
