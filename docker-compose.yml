@@ -64,6 +64,34 @@ services:
     networks:
       - karting-network
 
+  tarifas-especiales-service:
+    build: ./tarifas-especiales-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - karting-network
+
+  descuentos-frecuencia-service:
+    build: ./descuentos-frecuencia-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - karting-network
+      
   postgres:
     container_name: karting-db
     image: postgres:14
@@ -83,7 +111,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
     
   descuentopersonas-service:
     build: ./descuentopersonas-service
@@ -101,7 +128,6 @@ services:
     networks:
       - karting-network
 
-
   tarifa-service:
     build: ./tarifa-service
     depends_on:
@@ -115,7 +141,6 @@ services:
       - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=20
     networks:
       - karting-network
-
 
 networks:
   karting-network:

@@ -23,6 +23,14 @@ spring:
           uri: lb://tarifa-service
           predicates:
             - Path=/api/tarifa/**
+        - id: tarifas-especiales-service
+          uri: lb://tarifas-especiales-service
+          predicates:
+            - Path=/api/tarifaespecial/**
+        - id: descuentos-frecuencia-service
+          uri: lb://descuentos-frecuencia-service
+          predicates:
+            - Path=/api/frecuencia/**
 
 eureka:
   instance:
