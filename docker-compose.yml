@@ -57,8 +57,6 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
-      reservacomprobante-db:
-        condition: service_healthy
     environment:
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
@@ -66,9 +64,9 @@ services:
     networks:
       - karting-network
 
-  reservacomprobante-db:
-    container_name: reservacomprobante-db
-    image: postgres
+  postgres:
+    container_name: karting-db
+    image: postgres:14
     ports:
       - "5432:5432"
     environment:
@@ -76,7 +74,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
     volumes:
-      - reservacomprobante-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
     networks:
       - karting-network
     healthcheck:
@@ -84,6 +83,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
     
   descuentopersonas-service:
     build: ./descuentopersonas-service
@@ -102,9 +102,24 @@ services:
       - karting-network
 
 
+  tarifa-service:
+    build: ./tarifa-service
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=3000
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=20
+    networks:
+      - karting-network
+
+
 networks:
   karting-network:
     driver: bridge
 
 volumes:
-  reservacomprobante-data:
+  postgres-data:

@@ -15,11 +15,6 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name="reserva")
 public class ReservaEntity {
-    public enum tipoReserva {
-        MINUTOS10,
-        MINUTOS20,
-        MINUTOS30,
-    }
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
@@ -35,10 +30,16 @@ public class ReservaEntity {
     @Column(name = "duenoreserva")
     private String duenoReserva;
 
-    @Enumerated(EnumType.STRING)
+    // 1 = 10 vueltas, 2= 15, 3 = 20
     @Column(name = "tiporeserva")
-    private tipoReserva tipoReserva;
+    private int tipoReserva;
+
     private double total;
+
     @Column(name = "cantidadpersonas")
     private int cantidadPersonas;
+
+    @Column(name="frecuenciavisitas")
+    private int frecuenciaVisitas;
+
 }

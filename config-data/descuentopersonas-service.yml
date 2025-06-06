@@ -13,6 +13,12 @@ eureka:
 spring:
   application:
     name: descuentopersonas-service
+  datasource:
+    url: jdbc:postgresql://reservacomprobante-db:5432/descuentopersonas
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+
 
 management:
   endpoints:

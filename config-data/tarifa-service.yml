@@ -1,5 +1,3 @@
-# Correct YAML indentation
-
 server:
   port: ${PORT:0}
 
@@ -14,27 +12,20 @@ eureka:
 
 spring:
   application:
-    name: reservacomprobante-service
+    name: tarifa-service
   datasource:
-    url: jdbc:postgresql://reservacomprobante-db:5432/reservacomprobante
+    url: jdbc:postgresql://postgres:5432/tarifas
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
-    defer-datasource-initialization: true
-  sql:
-    init:
-      mode: always
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: tomas.carcamo.g@usach.cl
-    password: ttvskbgtqjguqmbq
+      ddl-auto: update
     properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  cloud:
+    config:
+      enabled: true

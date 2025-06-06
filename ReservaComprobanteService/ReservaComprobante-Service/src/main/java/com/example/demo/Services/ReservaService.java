@@ -2,7 +2,8 @@ package com.example.demo.Services;
 
 import com.example.demo.Entities.ReservaEntity;
 import com.example.demo.Repositories.ReservaRepository;
-import com.example.demo.client.DescuentoClient;
+import com.example.demo.client.DescuentoFrecuenciaClient;
+import com.example.demo.client.DescuentoPersonasClient;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.LineSeparator;
@@ -14,13 +15,15 @@ import java.util.List;
 @Service
 public class ReservaService {
     private final ReservaRepository reservaRepository;
-    private final DescuentoClient descuentoClient;
+    private final DescuentoPersonasClient descuentoClient;
+    private final DescuentoFrecuenciaClient descuentoFrecuenciaClient;
 
 
-    public ReservaService(ReservaRepository reservaRepository, DescuentoClient descuentoClient) {
+    public ReservaService(ReservaRepository reservaRepository, DescuentoPersonasClient descuentoClient,
+                          DescuentoFrecuenciaClient descuentoFrecuenciaClient) {
         this.reservaRepository = reservaRepository;
         this.descuentoClient = descuentoClient;
-
+        this.descuentoFrecuenciaClient = descuentoFrecuenciaClient;
     }
 
     public ReservaEntity getReservaById(Long idReserva) {
@@ -46,28 +49,48 @@ public class ReservaService {
         }
 
         // Calculate base price
-        double basePrice = calculateBasePrice(reserva.getTipoReserva());
+        double basePrice = 0;
 
-        // Get discount using Feign client
-        Double discount = descuentoClient.getDescuento(reserva.getCantidadPersonas());
-        if (discount == null) {
-            discount = 0.0; // Default if service is unavailable
+        int cantidadVisitasFrecuencia = reserva.getFrecuenciaVisitas();
+
+        if (cantidadVisitasFrecuencia <= 2){
+            basePrice = calculateBasePrice(reserva.getTipoReserva()) * reserva.getCantidadPersonas();
+        }else{
+            double casoEspecial;
+            try {
+                casoEspecial = calculateBasePrice(reserva.getTipoReserva()) * descuentoFrecuenciaClient.getDescuentoFrecuencia(reserva.getFrecuenciaVisitas());
+            }catch (Exception e){
+                System.out.println("Error obteniendo descuento por frecuencia: " + e.getMessage());
+                casoEspecial = calculateBasePrice(reserva.getTipoReserva());
+            }
+            basePrice = calculateBasePrice(reserva.getTipoReserva()) * reserva.getCantidadPersonas() - calculateBasePrice(reserva.getTipoReserva()) + casoEspecial;
         }
 
+        Double descuentoVisitas = 0.0;
+        try{
+            descuentoVisitas = descuentoClient.getDescuentoPersonas(reserva.getCantidadPersonas());
+            if (descuentoVisitas == null) {
+                descuentoVisitas = 0.0; // Default if service is unavailable
+            }
+        }catch (Exception e) {
+        // Log the exception
+        System.out.println("Error calling discount service: " + e.getMessage());
+        // Continue with zero discount
+        }
         // Apply discount to calculate final price
-        double finalPrice = basePrice * (1 - discount);
+        double finalPrice = basePrice * (1 - descuentoVisitas);
         reserva.setTotal(finalPrice);
 
         return reservaRepository.save(reserva);
     }
 
-    private double calculateBasePrice(ReservaEntity.tipoReserva tipo) {
+    private double calculateBasePrice(int tipo) {
         switch (tipo) {
-            case MINUTOS10:
-                return 10000;
-            case MINUTOS20:
-                return 18000;
-            case MINUTOS30:
+            case 1:
+                return 15000;
+            case 2:
+                return 20000;
+            case 3:
                 return 25000;
             default:
                 return 0;
@@ -98,13 +121,13 @@ public class ReservaService {
             // Number of laps based on enum
             String laps;
             switch (reserva.getTipoReserva()) {
-                case MINUTOS10:
+                case 1:
                     laps = "10 minutos (5 vueltas)";
                     break;
-                case MINUTOS20:
+                case 2:
                     laps = "20 minutos (10 vueltas)";
                     break;
-                case MINUTOS30:
+                case 3:
                     laps = "30 minutos (15 vueltas)";
                     break;
                 default:
@@ -126,18 +149,26 @@ public class ReservaService {
             // Total section with discount info
             Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLACK);
             document.add(new Paragraph("\nResumen de pago:", totalFont));
-            
+
             // Base price
             double basePrice = calculateBasePrice(reserva.getTipoReserva());
             document.add(new Paragraph("Precio base: $" + String.format("%,.0f", basePrice), contentFont));
-            
+
             // Discount calculation
             double discount = 0;
             try {
-                discount = descuentoClient.getDescuento(reserva.getCantidadPersonas());
+                discount = descuentoClient.getDescuentoPersonas(reserva.getCantidadPersonas());
                 document.add(new Paragraph("Descuento aplicado: " + String.format("%.0f%%", discount * 100), contentFont));
             } catch (Exception e) {
-                document.add(new Paragraph("Descuento aplicado: 0%", contentFont));
+                document.add(new Paragraph("Descuento  cant. personas aplicado: 0%", contentFont));
+            }
+
+            //Descuento frecuencia
+            double discount2 = 0.0;
+            try{
+                discount2 = descuentoFrecuenciaClient.getDescuentoFrecuencia(reserva.getFrecuenciaVisitas());
+            }catch (Exception e) {
+                document.add(new Paragraph("Descuento frecuencia aplicado : 0%", contentFont));
             }
             
             // Final price

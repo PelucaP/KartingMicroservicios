@@ -5,8 +5,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "descuentopersonas-service")
-public interface DescuentoClient {
-
+public interface DescuentoPersonasClient {
     @GetMapping("/api/descuento/{personas}")
-    Double getDescuento(@PathVariable("personas") int personas);
+    Double getDescuentoPersonas(@PathVariable("personas") int personas);
 }
+

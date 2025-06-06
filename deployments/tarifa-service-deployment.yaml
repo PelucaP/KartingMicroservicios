@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tarifa-service
+  labels:
+    app: tarifa-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tarifa-service
+  template:
+    metadata:
+      labels:
+        app: tarifa-service
+    spec:
+      containers:
+      - name: tarifa-service
+        image: pelucap/microservicios:tarifa-service
+        env:
+        - name: SPRING_CLOUD_CONFIG_URI
+          value: http://config-server:8888
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: http://eureka-server:8761/eureka/
+        - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+          value: "true"
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://postgres:5432/tarifas
