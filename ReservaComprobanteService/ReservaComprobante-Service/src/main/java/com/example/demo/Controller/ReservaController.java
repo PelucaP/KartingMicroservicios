@@ -1,6 +1,7 @@
 package com.example.demo.Controller;
 
 
+import com.example.demo.DTO.ReservaRequest;
 import com.example.demo.Entities.ReservaEntity;
 import com.example.demo.Services.EmailService;
 import com.example.demo.Services.ReservaService;
@@ -23,9 +24,9 @@ public class ReservaController {
     }
 
     @PostMapping("/crear")
-    public ResponseEntity<?> createReserva(@RequestBody ReservaEntity reserva) {
+    public ResponseEntity<?> createReserva(@RequestBody ReservaRequest reserva) {
         ReservaEntity nuevaReserva = reservaService.createReserva(reserva);
-        emailService.enviarEmail(reserva.getEmail(),"Buenas tardes","Estimado " + reserva.getDuenoReserva() + " Aquí esta su comprobante",nuevaReserva);
+        emailService.enviarEmail(reserva.getEmail(),"Buenas tardes","Estimado " + reserva.getDuenoReserva() + " Aquí esta su comprobante",nuevaReserva,reserva);
         return ResponseEntity.ok().build();
     }
 
@@ -39,22 +40,10 @@ public class ReservaController {
         }
     }
 
-    @PostMapping("/enviar")
-    public ResponseEntity<?> enviarComprobante(@RequestBody ReservaEntity reserva) {
-        emailService.enviarEmail(reserva.getEmail(),"Buenas tardes","Estimado " + reserva.getDuenoReserva() + " Aquí esta su comprobante",reserva);
+    @PostMapping("/creartest")
+    public ResponseEntity<?> enviarComprobante(@RequestBody ReservaRequest reserva) {
+        ReservaEntity nuevaReserva = reservaService.createReserva(reserva);
         return ResponseEntity.ok().build();
     }
-
-    @GetMapping("/gfg")
-    public ResponseEntity<String> getAnonymous() {
-        return ResponseEntity.ok("Welcome to GeeksforGeeks");
-    }
-    /*
-    @GetMapping("/dsctopersonas")
-    public ResponseEntity<?> obtenerDsctoPersonas() {
-        RestTemplate restTemplate = new RestTemplate();
-
-    }
-     */
 
 }

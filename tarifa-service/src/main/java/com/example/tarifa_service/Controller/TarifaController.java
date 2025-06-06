@@ -1,5 +1,6 @@
 package com.example.tarifa_service.Controller;
 
+import com.example.tarifa_service.DTO.TarifaResponse;
 import com.example.tarifa_service.Entities.TarifaEntity;
 import com.example.tarifa_service.Services.TarifaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +19,7 @@ public class TarifaController {
 
     @GetMapping("/{tipoTarifa}")
     public ResponseEntity<?> createTarifa(@PathVariable int tipoTarifa) {
-        TarifaEntity tarifa = tarifaService.crearTarifa(tipoTarifa);
+        TarifaResponse tarifa = tarifaService.crearTarifa(tipoTarifa);
         if (tarifa == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

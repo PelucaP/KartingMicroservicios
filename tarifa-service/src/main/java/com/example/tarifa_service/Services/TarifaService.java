@@ -1,6 +1,7 @@
 package com.example.tarifa_service.Services;
 
 import com.example.tarifa_service.Controller.TarifaController;
+import com.example.tarifa_service.DTO.TarifaResponse;
 import com.example.tarifa_service.Entities.TarifaEntity;
 import com.example.tarifa_service.Repository.TarifaRepository;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,9 @@ public class TarifaService {
         return tarifaRepository.save(tarifaEntity);
     }
 
-    public TarifaEntity crearTarifa(int tarifa) {
+    public TarifaResponse crearTarifa(int tarifa) {
         TarifaEntity tarifaEntity = new TarifaEntity();
+        TarifaResponse tarifaResponse = new TarifaResponse();
         tarifaEntity.setTipoTarifa(tarifa);
         if(tarifa==1){
             tarifaEntity.setTiempoTotal(30);
@@ -33,7 +35,11 @@ public class TarifaService {
         else {
             return null;
         }
-        return tarifaRepository.save(tarifaEntity);
+        tarifaResponse.setPrecioPersona(tarifaEntity.getPrecioPersona());
+        tarifaResponse.setTipoTarifa(tarifaEntity.getTipoTarifa());
+        tarifaResponse.setTiempoTotal(tarifaEntity.getTiempoTotal());
+        tarifaRepository.save(tarifaEntity);
+        return tarifaResponse;
     }
 
 }

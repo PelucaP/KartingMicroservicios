@@ -1,7 +1,7 @@
 
-INSERT INTO reserva (fechainicio, fechafin, email, duenoreserva,tiporeserva,total,cantidadpersonas,frecuenciavisitas) VALUES
-('2023-10-01', '2023-10-05', 'john@example.com', 'John Doe',1,12321.03,1,2),
-('2023-10-10', '2023-10-15', 'jane@example.com', 'Jane Smith',2,312312.97,4,1),
-('2023-09-28', '2023-10-02', 'mike@example.com', 'Mike Johnson',2,312324.97,6,7),
-('2023-09-15', '2023-09-20', 'sarah@example.com', 'Sarah Wilson',3,12342.12,8,3),
-('2023-10-30', '2023-11-05', 'chris@example.com', 'Chris Brown',2,3122.97,10,2)
+INSERT INTO reserva (fechainicio, fechafin, email, duenoreserva, tiporeserva, total, cantidadpersonas, frecuenciavisitas) VALUES
+                                                                                                                              ('2023-10-01 10:00:00', '2023-10-01 10:30:00', 'john@example.com', 'John Doe', 1, 15000, 1, 2),
+                                                                                                                              ('2023-10-10 14:30:00', '2023-10-10 15:15:00', 'jane@example.com', 'Jane Smith', 2, 60000, 4, 1),
+                                                                                                                              ('2023-09-28 16:00:00', '2023-09-28 17:00:00', 'mike@example.com', 'Mike Johnson', 2, 75000, 6, 7),
+                                                                                                                              ('2023-09-15 11:15:00', '2023-09-15 12:15:00', 'sarah@example.com', 'Sarah Wilson', 3, 160000, 8, 3),
+                                                                                                                              ('2023-10-30 18:45:00', '2023-10-30 19:45:00', 'chris@example.com', 'Chris Brown', 2, 150000, 10, 2);

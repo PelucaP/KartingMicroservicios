@@ -20,7 +20,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop  # Change from update to create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect

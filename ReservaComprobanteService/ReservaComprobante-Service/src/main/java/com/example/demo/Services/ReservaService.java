@@ -1,15 +1,21 @@
 package com.example.demo.Services;
 
+import com.example.demo.DTO.ReservaRequest;
+import com.example.demo.DTO.TarifaResponse;
 import com.example.demo.Entities.ReservaEntity;
 import com.example.demo.Repositories.ReservaRepository;
 import com.example.demo.client.DescuentoFrecuenciaClient;
 import com.example.demo.client.DescuentoPersonasClient;
+import com.example.demo.client.TarifaClient;
+import com.example.demo.client.TarifaEspecialClient;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.draw.LineSeparator;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -17,13 +23,17 @@ public class ReservaService {
     private final ReservaRepository reservaRepository;
     private final DescuentoPersonasClient descuentoClient;
     private final DescuentoFrecuenciaClient descuentoFrecuenciaClient;
+    private final TarifaClient tarifaClient;
+    private final TarifaEspecialClient tarifaEspecialClient;
 
 
     public ReservaService(ReservaRepository reservaRepository, DescuentoPersonasClient descuentoClient,
-                          DescuentoFrecuenciaClient descuentoFrecuenciaClient) {
+                          DescuentoFrecuenciaClient descuentoFrecuenciaClient, TarifaClient tarifaClient, TarifaEspecialClient tarifaEspecialClient) {
         this.reservaRepository = reservaRepository;
         this.descuentoClient = descuentoClient;
         this.descuentoFrecuenciaClient = descuentoFrecuenciaClient;
+        this.tarifaEspecialClient = tarifaEspecialClient;
+        this.tarifaClient = tarifaClient;
     }
 
     public ReservaEntity getReservaById(Long idReserva) {
@@ -33,7 +43,48 @@ public class ReservaService {
         return reservaRepository.findAll();
     }
 
-    public ReservaEntity createReserva(ReservaEntity reserva) {
+    public ReservaEntity createReserva(ReservaRequest reservaRequest) {
+
+        ReservaEntity reserva = new ReservaEntity();
+
+        double tarifaEspecial = 0.0;
+        try {
+            tarifaEspecial = tarifaEspecialClient.getTarifaEspeciales(reservaRequest.getTarifaEspecial());
+        } catch (Exception e) {
+            tarifaEspecial = 0.0;
+        }
+        //Obtener tarifa con microservicio 1
+        TarifaResponse tarifa = new TarifaResponse();
+        try{
+            if(tarifaEspecial != 0){
+                tarifa = tarifaClient.getTarifa(reservaRequest.getTipoReserva());
+                tarifa.setPrecioPersona(tarifa.getPrecioPersona() * tarifaEspecial);
+            }else{
+                tarifa = tarifaClient.getTarifa(reservaRequest.getTipoReserva());
+            }
+        } catch (Exception e) {
+            tarifa.setTipoTarifa(1);
+            tarifa.setPrecioPersona(10000);
+            tarifa.setTiempoTotal(30);
+            System.out.println("Error calling discount service: " + e.getMessage());
+        }
+
+        reserva.setDuenoReserva(reservaRequest.getDuenoReserva());
+        reserva.setCantidadPersonas(reservaRequest.getCantidadPersonas());
+        reserva.setTipoReserva(reservaRequest.getTipoReserva());
+        reserva.setFrecuenciaVisitas(reservaRequest.getCantidadFrecuencia());
+        reserva.setEmail(reservaRequest.getEmail());
+
+        reserva.setFechaInicio(reservaRequest.getFechaReserva());
+
+        //Obtener fecha de termino de la reserva a partir del inicio y del valor obtenido
+        // a través de microservicio 1
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(reservaRequest.getFechaReserva());
+        calendar.add(Calendar.MINUTE, tarifa.getTiempoTotal());
+        Date fechaFin = calendar.getTime();
+        reserva.setFechaFin(fechaFin);
+
         if (reserva.getFechaInicio() == null || reserva.getFechaFin() == null) {
             throw new IllegalArgumentException("La fecha de inicio y fin de la reserva no pueden ser nulas.");
         }
@@ -54,16 +105,16 @@ public class ReservaService {
         int cantidadVisitasFrecuencia = reserva.getFrecuenciaVisitas();
 
         if (cantidadVisitasFrecuencia <= 2){
-            basePrice = calculateBasePrice(reserva.getTipoReserva()) * reserva.getCantidadPersonas();
+            basePrice = tarifa.getPrecioPersona() * reserva.getCantidadPersonas();
         }else{
             double casoEspecial;
             try {
-                casoEspecial = calculateBasePrice(reserva.getTipoReserva()) * descuentoFrecuenciaClient.getDescuentoFrecuencia(reserva.getFrecuenciaVisitas());
+                casoEspecial = tarifa.getPrecioPersona() * descuentoFrecuenciaClient.getDescuentoFrecuencia(reserva.getFrecuenciaVisitas());
             }catch (Exception e){
                 System.out.println("Error obteniendo descuento por frecuencia: " + e.getMessage());
-                casoEspecial = calculateBasePrice(reserva.getTipoReserva());
+                casoEspecial = tarifa.getPrecioPersona();
             }
-            basePrice = calculateBasePrice(reserva.getTipoReserva()) * reserva.getCantidadPersonas() - calculateBasePrice(reserva.getTipoReserva()) + casoEspecial;
+            basePrice = tarifa.getPrecioPersona() * reserva.getCantidadPersonas() - tarifa.getTipoTarifa() + casoEspecial;
         }
 
         Double descuentoVisitas = 0.0;
@@ -78,111 +129,146 @@ public class ReservaService {
         // Continue with zero discount
         }
         // Apply discount to calculate final price
-        double finalPrice = basePrice * (1 - descuentoVisitas);
+        double finalPrice = ((basePrice * (1 - descuentoVisitas))* 1.19);
         reserva.setTotal(finalPrice);
-
         return reservaRepository.save(reserva);
     }
 
-    private double calculateBasePrice(int tipo) {
-        switch (tipo) {
-            case 1:
-                return 15000;
-            case 2:
-                return 20000;
-            case 3:
-                return 25000;
-            default:
-                return 0;
-        }
-    }
 
-    public byte[] crearComprobante(ReservaEntity reserva) {
+    public byte[] crearComprobante(ReservaEntity reserva, int idTarifaEspecial) {
         try {
+
             Document document = new Document();
             ByteArrayOutputStream pdf = new ByteArrayOutputStream();
             PdfWriter.getInstance(document, pdf);
             document.open();
-            
+
             // Title
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLACK);
             Paragraph title = new Paragraph("COMPROBANTE DE RESERVA", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
             title.setSpacingAfter(20);
             document.add(title);
-            
+
             // Content font
             Font contentFont = FontFactory.getFont(FontFactory.HELVETICA, 12, BaseColor.BLACK);
-            
-            // Reservation details
+            Font subtitleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLACK);
+
+            // Reservation details section
+            document.add(new Paragraph("DETALLES DE LA RESERVA", subtitleFont));
             document.add(new Paragraph("ID de Reserva: " + reserva.getId(), contentFont));
-            document.add(new Paragraph("Fecha y Hora: " + reserva.getFechaInicio().toString(), contentFont));
-            
-            // Number of laps based on enum
-            String laps;
-            switch (reserva.getTipoReserva()) {
-                case 1:
-                    laps = "10 minutos (5 vueltas)";
-                    break;
-                case 2:
-                    laps = "20 minutos (10 vueltas)";
-                    break;
-                case 3:
-                    laps = "30 minutos (15 vueltas)";
-                    break;
-                default:
-                    laps = "No especificado";
-            }
-            document.add(new Paragraph("Duración/Vueltas: " + laps, contentFont));
-            
-            // Total people
+            document.add(new Paragraph("Cliente: " + reserva.getDuenoReserva(), contentFont));
+            document.add(new Paragraph("Email: " + reserva.getEmail(), contentFont));
+            document.add(new Paragraph("Fecha y Hora de Inicio: " + reserva.getFechaInicio().toString(), contentFont));
+            document.add(new Paragraph("Fecha y Hora de Término: " + reserva.getFechaFin().toString(), contentFont));
             document.add(new Paragraph("Cantidad de personas: " + reserva.getCantidadPersonas(), contentFont));
-            
-            // Reservation owner
-            document.add(new Paragraph("Reservado por: " + reserva.getDuenoReserva(), contentFont));
-            
+            document.add(new Paragraph("Frecuencia de visitas: " + reserva.getFrecuenciaVisitas(), contentFont));
+
+            // Get tarifa information
+            TarifaResponse tarifa = null;
+            try {
+                tarifa = tarifaClient.getTarifa(reserva.getTipoReserva());
+            } catch (Exception e) {
+                // Fallback values if service is down
+                tarifa = new TarifaResponse();
+                tarifa.setTipoTarifa(reserva.getTipoReserva());
+                switch(reserva.getTipoReserva()) {
+                    case 1: tarifa.setTiempoTotal(30); tarifa.setPrecioPersona(10000); break;
+                    case 2: tarifa.setTiempoTotal(45); tarifa.setPrecioPersona(15000); break;
+                    case 3: tarifa.setTiempoTotal(60); tarifa.setPrecioPersona(20000); break;
+                    default: tarifa.setTiempoTotal(30); tarifa.setPrecioPersona(10000);
+                }
+            }
+
+            document.add(new Paragraph("Duración: " + tarifa.getTiempoTotal() + " minutos", contentFont));
+
             // Separator line
             LineSeparator lineSeparator = new LineSeparator();
             lineSeparator.setLineColor(BaseColor.LIGHT_GRAY);
             document.add(new Chunk(lineSeparator));
-            
-            // Total section with discount info
-            Font totalFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLACK);
-            document.add(new Paragraph("\nResumen de pago:", totalFont));
+            document.add(new Paragraph("\n"));
 
-            // Base price
-            double basePrice = calculateBasePrice(reserva.getTipoReserva());
-            document.add(new Paragraph("Precio base: $" + String.format("%,.0f", basePrice), contentFont));
+            // Price calculation section
+            document.add(new Paragraph("DETALLE DE PRECIOS", subtitleFont));
 
-            // Discount calculation
-            double discount = 0;
+            // Get base tarifa price
+            double baseTarifaPrice = tarifa.getPrecioPersona();
+            document.add(new Paragraph("Precio base por persona: $" + String.format("%,.0f", baseTarifaPrice), contentFont));
+
+            // Special tariff multiplier if applicable
+            double tarifaEspecial = 0.0;
             try {
-                discount = descuentoClient.getDescuentoPersonas(reserva.getCantidadPersonas());
-                document.add(new Paragraph("Descuento aplicado: " + String.format("%.0f%%", discount * 100), contentFont));
+                tarifaEspecial = tarifaEspecialClient.getTarifaEspeciales(idTarifaEspecial);
+                if (tarifaEspecial != 0.0 && tarifaEspecial != 1.0) {
+                    document.add(new Paragraph("Tarifa especial aplicada: " + String.format("%.2f", tarifaEspecial) + "x", contentFont));
+                    document.add(new Paragraph("Precio con tarifa especial: $" + String.format("%,.0f", baseTarifaPrice * tarifaEspecial), contentFont));
+                    baseTarifaPrice = baseTarifaPrice * tarifaEspecial;
+                }
             } catch (Exception e) {
-                document.add(new Paragraph("Descuento  cant. personas aplicado: 0%", contentFont));
+                document.add(new Paragraph("No se aplicó tarifa especial", contentFont));
             }
 
-            //Descuento frecuencia
-            double discount2 = 0.0;
-            try{
-                discount2 = descuentoFrecuenciaClient.getDescuentoFrecuencia(reserva.getFrecuenciaVisitas());
-            }catch (Exception e) {
-                document.add(new Paragraph("Descuento frecuencia aplicado : 0%", contentFont));
+            // Total for all people before discounts
+            double priceAllPersons = baseTarifaPrice * reserva.getCantidadPersonas();
+            document.add(new Paragraph("Subtotal para " + reserva.getCantidadPersonas() + " personas: $" + String.format("%,.0f", priceAllPersons), contentFont));
+
+            // Frequency discount if applicable
+            double priceAfterFrequencyDiscount = priceAllPersons;
+            if (reserva.getFrecuenciaVisitas() > 2) {
+                try {
+                    double frecuencyDiscountFactor = descuentoFrecuenciaClient.getDescuentoFrecuencia(reserva.getFrecuenciaVisitas());
+                    document.add(new Paragraph("Descuento por frecuencia (" + reserva.getFrecuenciaVisitas() + " visitas): " +
+                            String.format("%.0f%%", (1-frecuencyDiscountFactor) * 100), contentFont));
+
+                    double casoEspecial = baseTarifaPrice * frecuencyDiscountFactor;
+                    priceAfterFrequencyDiscount = (baseTarifaPrice * reserva.getCantidadPersonas()) - tarifa.getTipoTarifa() + casoEspecial;
+                    document.add(new Paragraph("Precio después de descuento por frecuencia: $" +
+                            String.format("%,.0f", priceAfterFrequencyDiscount), contentFont));
+                } catch (Exception e) {
+                    document.add(new Paragraph("No se pudo aplicar descuento por frecuencia", contentFont));
+                }
+            } else {
+                document.add(new Paragraph("No aplica descuento por frecuencia (mínimo 3 visitas)", contentFont));
             }
-            
-            // Final price
+
+            // Group size discount
+            double personasDiscountFactor = 0.0;
+            try {
+                personasDiscountFactor = descuentoClient.getDescuentoPersonas(reserva.getCantidadPersonas());
+                document.add(new Paragraph("Descuento por cantidad de personas (" + reserva.getCantidadPersonas() +
+                        "): " + String.format("%.0f%%", personasDiscountFactor * 100), contentFont));
+            } catch (Exception e) {
+                document.add(new Paragraph("No se pudo aplicar descuento por cantidad de personas", contentFont));
+            }
+
+            double priceAfterAllDiscounts = priceAfterFrequencyDiscount * (1 - personasDiscountFactor);
+            document.add(new Paragraph("Precio después de todos los descuentos: $" +
+                    String.format("%,.0f", priceAfterAllDiscounts), contentFont));
+
+            // IVA calculation
+            double ivaAmount = priceAfterAllDiscounts * 0.19;
+            document.add(new Paragraph("IVA (19%): $" + String.format("%,.0f", ivaAmount), contentFont));
+
+            // Final price with IVA
             Font priceFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLACK);
-            Paragraph total = new Paragraph("TOTAL: $" + String.format("%,.0f", reserva.getTotal()), priceFont);
+            double finalPrice = priceAfterAllDiscounts * 1.19;
+            Paragraph total = new Paragraph("TOTAL A PAGAR: $" + String.format("%,.0f", finalPrice), priceFont);
             total.setAlignment(Element.ALIGN_RIGHT);
             document.add(total);
-            
+
+            // Compare with saved total for verification
+            if (Math.abs(finalPrice - reserva.getTotal()) > 1) {  // Allow for minor rounding differences
+                document.add(new Paragraph("\nNota: El precio calculado puede diferir ligeramente del precio almacenado " +
+                        "($" + String.format("%,.0f", reserva.getTotal()) + ") debido a redondeo.",
+                        FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.GRAY)));
+            }
+
             // Footer
             Font footerFont = FontFactory.getFont(FontFactory.HELVETICA, 10, BaseColor.GRAY);
             Paragraph footer = new Paragraph("\nGracias por preferir Karting Microservicios. ¡Disfrute su experiencia!", footerFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
-            
+
             document.close();
             return pdf.toByteArray();
         } catch (Exception e) {
