@@ -16,7 +16,7 @@ spring:
   application:
     name: reservacomprobante-service
   datasource:
-    url: jdbc:postgresql://reservacomprobante-db:5432/reservacomprobante
+    url: jdbc:postgresql://postgres:5432/reservacomprobante
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
