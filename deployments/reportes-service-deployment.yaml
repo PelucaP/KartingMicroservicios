@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reportes-service
+  labels:
+    app: reportes-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reportes-service
+  template:
+    metadata:
+      labels:
+        app: reportes-service
+    spec:
+      containers:
+      - name: reportes-service
+        image: pelucap/microservicios:reportes-service
+        ports:
+        - containerPort: 8092
+        env:
+        - name: PORT
+          value: "8092"
+        - name: SPRING_CLOUD_CONFIG_URI
+          value: http://config-server:8888
+        - name: SPRING_CONFIG_IMPORT
+          value: optional:configserver:http://config-server:8888
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: http://eureka-server:8761/eureka/
+        - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+          value: "true"
+        - name: EUREKA_INSTANCE_HOSTNAME
+          value: "reportes-service"
+        - name: EUREKA_INSTANCE_INSTANCEID
+          value: "reportes-service:${HOSTNAME}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reportes-service
+  labels:
+    app: reportes-service
+spec:
+  selector:
+    app: reportes-service
+  ports:
+  - port: 80
+    targetPort: 8092
+  type: ClusterIP
