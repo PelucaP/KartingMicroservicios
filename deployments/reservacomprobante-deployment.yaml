@@ -36,9 +36,9 @@ spec:
         - name: EUREKA_INSTANCE_INSTANCEID
           value: "reservacomprobante-service:${HOSTNAME}"
           
-        # Database connection - using secrets
+        # Database connection - updated to point to the specific database
         - name: SPRING_DATASOURCE_URL
-          value: jdbc:postgresql://reservacomprobante-db:5432/postgres
+          value: jdbc:postgresql://postgres:5432/reservacomprobante
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
@@ -49,6 +49,8 @@ spec:
             secretKeyRef:
               name: db-credentials
               key: password
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: "update"
               
         # Email settings - using secrets
         - name: SPRING_MAIL_HOST

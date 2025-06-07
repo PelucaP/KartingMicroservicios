@@ -1,25 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tarifa-service
+  name: descuentos-frecuencia-service
   labels:
-    app: tarifa-service
+    app: descuentos-frecuencia-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tarifa-service
+      app: descuentos-frecuencia-service
   template:
     metadata:
       labels:
-        app: tarifa-service
+        app: descuentos-frecuencia-service
     spec:
       containers:
-      - name: tarifa-service
-        image: pelucap/microservicios:tarifa-service
+      - name: descuentos-frecuencia-service
+        image: pelucap/microservicios:descuentos-frecuencia-service
         ports:
         - containerPort: 8080
         env:
+        - name: PORT
+          value: "8080"
         - name: SPRING_CLOUD_CONFIG_URI
           value: http://config-server:8888
         - name: SPRING_CONFIG_IMPORT
@@ -29,11 +31,11 @@ spec:
         - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
           value: "true"
         - name: EUREKA_INSTANCE_HOSTNAME
-          value: "tarifa-service"
+          value: "descuentos-frecuencia-service"
         - name: EUREKA_INSTANCE_INSTANCEID
-          value: "tarifa-service:${HOSTNAME}"
+          value: "descuentos-frecuencia-service:${HOSTNAME}"
         - name: SPRING_DATASOURCE_URL
-          value: jdbc:postgresql://postgres:5432/tarifas
+          value: jdbc:postgresql://postgres:5432/frecuencia_visitas
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
@@ -50,12 +52,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tarifa-service
+  name: descuentos-frecuencia-service
   labels:
-    app: tarifa-service
+    app: descuentos-frecuencia-service
 spec:
   selector:
-    app: tarifa-service
+    app: descuentos-frecuencia-service
   ports:
   - port: 80
     targetPort: 8080
