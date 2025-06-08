@@ -34,7 +34,7 @@ spring:
         - id : reportes-service
           uri: lb://reportes-service
           predicates:
-            - Path=/api/reportes/**
+            - Path=/api/reporte/**
 
 eureka:
   instance:
