@@ -1,6 +1,7 @@
 package com.example.demo.Controller;
 
 
+import com.example.demo.DTO.ReservaRackRequest;
 import com.example.demo.DTO.ReservaRequest;
 import com.example.demo.DTO.ReservaVueltasResponse;
 import com.example.demo.Entities.ReservaEntity;
@@ -43,6 +44,17 @@ public class ReservaController {
             return ResponseEntity.ok(reservas);
         }
     }
+
+    @GetMapping("/for-rack") // Changed path for clarity, or you can keep /racklistar
+    public ResponseEntity<List<ReservaRackRequest>> listarReservasForRack() {
+        List<ReservaRackRequest> reservasParaRack = reservaService.getAllReservasForRack();
+        if (reservasParaRack.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(reservasParaRack);
+    }
+
+
     @GetMapping("/between")
     public ResponseEntity<List<ReservaVueltasResponse>> getReservasBetweenDates(
             @RequestParam("fechaInicio") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date inicio,

@@ -1,5 +1,6 @@
 package com.example.demo.Services;
 
+import com.example.demo.DTO.ReservaRackRequest;
 import com.example.demo.DTO.ReservaRequest;
 import com.example.demo.DTO.ReservaVueltasResponse;
 import com.example.demo.DTO.TarifaResponse;
@@ -18,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ReservaService {
@@ -40,8 +42,17 @@ public class ReservaService {
     public ReservaEntity getReservaById(Long idReserva) {
         return reservaRepository.findById(idReserva).get();
     }
+
     public List<ReservaEntity> getAllReservas() {
         return reservaRepository.findAll();
+    }
+    public List<ReservaRackRequest> getAllReservasForRack() {
+        return reservaRepository.findAll().stream()
+                .map(reserva -> new ReservaRackRequest(
+                        reserva.getFechaInicio(),
+                        reserva.getFechaFin(),
+                        reserva.getDuenoReserva()))
+                .collect(Collectors.toList());
     }
 
     public ReservaEntity createReserva(ReservaRequest reservaRequest) {

@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rack-service
+  labels:
+    app: rack-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rack-service
+  template:
+    metadata:
+      labels:
+        app: rack-service
+    spec:
+      containers:
+      - name: rack-service
+        image: pelucap/microservicios:rack-service # Ensure this Docker image is correct
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8095
+          name: http
+        env:
+        - name: SPRING_CONFIG_IMPORT
+          value: "optional:configserver:http://config-server:8888"
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: "http://eureka-server:8761/eureka/"
+        - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+          value: "true"
+        - name: SPRING_CLOUD_CONFIG_FAIL_FAST
+          value: "false"
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: http 
+          initialDelaySeconds: 45
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: http 
+          initialDelaySeconds: 75
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rack-service
+  labels:
+    app: rack-service
+spec:
+  selector:
+    app: rack-service
+  ports:
+  - port: 80 
+    targetPort: http
+    protocol: TCP
+  type: ClusterIP

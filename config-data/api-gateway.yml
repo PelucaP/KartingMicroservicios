@@ -35,6 +35,10 @@ spring:
           uri: lb://reportes-service
           predicates:
             - Path=/api/reporte/**
+        - id: rack-service
+          uri: lb://rack-service
+          predicates:
+            - Path=/api/rack/**
 
 eureka:
   instance:
