@@ -59,7 +59,11 @@ public class ReservaService {
         try{
             if(tarifaEspecial != 0){
                 tarifa = tarifaClient.getTarifa(reservaRequest.getTipoReserva());
-                tarifa.setPrecioPersona(tarifa.getPrecioPersona() * tarifaEspecial);
+                if(tarifaEspecial > 1){
+                    tarifa.setPrecioPersona(tarifa.getPrecioPersona() * tarifaEspecial);
+                }else{
+                    tarifa.setPrecioPersona(tarifa.getPrecioPersona() * (1- tarifaEspecial));
+                }
             }else{
                 tarifa = tarifaClient.getTarifa(reservaRequest.getTipoReserva());
             }

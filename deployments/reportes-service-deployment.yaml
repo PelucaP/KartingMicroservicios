@@ -17,22 +17,23 @@ spec:
       containers:
       - name: reportes-service
         image: pelucap/microservicios:reportes-service
+        imagePullPolicy: Always
         ports:
         - containerPort: 8092
           name: http
         env:
-        - name: SPRING_CLOUD_CONFIG_URI
-          value: http://config-server:8888
         - name: SPRING_CONFIG_IMPORT
-          value: optional:configserver:http://config-server:8888
+          value: "optional:configserver:http://config-server:8888"
+        - name: SPRING_CLOUD_CONFIG_URI
+          value: "http://config-server:8888"
         - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
-          value: http://eureka-server:8761/eureka/
+          value: "http://eureka-server:8761/eureka/"
         - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
           value: "true"
         - name: EUREKA_INSTANCE_HOSTNAME
-          value: "${HOSTNAME}.reportes-service"
+          value: "reportes-service"
         - name: EUREKA_INSTANCE_INSTANCEID
-          value: "${HOSTNAME}:${spring.application.name}:${random.value}"
+          value: "${HOSTNAME}:reportes-service:${server.port}"
         - name: SPRING_CLOUD_CONFIG_FAIL_FAST
           value: "false"
 ---
