@@ -3,19 +3,16 @@ package com.example.demo.DTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
-public class ReservaVueltasResponse {
-    private Long id;
+public class FechaDTO {
+    @DateTimeFormat(pattern="yyyy-MM-dd")
     private Date fechaInicio;
+    @DateTimeFormat(pattern="yyyy-MM-dd")
     private Date fechaFin;
-    private int tipoReserva;    // 1=30min, 2=45min, 3=60min
-    private double total;       // precio final
-    private int cantidadPersonas;
-    private int frecuenciaVisitas;
 }

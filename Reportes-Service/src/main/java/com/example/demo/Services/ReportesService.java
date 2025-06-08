@@ -1,7 +1,7 @@
 package com.example.demo.Services;
 
-import com.example.demo.Entity.ReporteEntity;
-import com.example.demo.Repository.ReporteRepository;
+import com.example.demo.Client.ReservaClient;
+import com.example.demo.DTO.ReservaVueltasResponse;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -16,46 +16,59 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
 public class ReportesService {
-    private final ReporteRepository reporteRepository;
+    private final ReservaClient reservaClient;
 
-    public ReportesService(ReporteRepository reporteRepository) {
-        this.reporteRepository = reporteRepository;
+    public ReportesService(ReservaClient reservaClient) {
+        this.reservaClient = reservaClient;
     }
 
-    private void processReservationsForMonthlyIncome(List<ReporteEntity> reservas,
-                                                     int reservaTipo,
-                                                     Map<YearMonth, double[]> monthlyIncomeData) {
-        int typeIndex;
-        switch (reservaTipo) {
-            case 1:
-                typeIndex = 0;
-                break;
-            case 2:
-                typeIndex = 1;
-                break;
-            case 3:
-                typeIndex = 2;
-                break;
-            default:
-                return; // Unknown type
-        }
+    private void processReservationsForMonthlyIncome(List<ReservaVueltasResponse> reservas,
+                                                int reservaTipo,
+                                                Map<YearMonth, double[]> monthlyIncomeData) {
+    int typeIndex;
+    switch (reservaTipo) {
+        case 1:
+            typeIndex = 0;
+            break;
+        case 2:
+            typeIndex = 1;
+            break;
+        case 3:
+            typeIndex = 2;
+            break;
+        default:
+            return; // Unknown type
+    }
 
-        for (ReporteEntity reserva : reservas) {
-            if (reserva.getFechaInicio() != null) {
-                YearMonth ym = YearMonth.from(reserva.getFechaInicio().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
-                monthlyIncomeData.putIfAbsent(ym, new double[3]); // 3 types: MINUTOS10, MINUTOS15, MINUTOS20
-                monthlyIncomeData.get(ym)[typeIndex] += reserva.getTotal();
-            }
+    for (ReservaVueltasResponse reserva : reservas) {
+        if (reserva.getFechaInicio() != null) {
+            YearMonth ym = YearMonth.from(reserva.getFechaInicio().toInstant().atZone(ZoneId.systemDefault()).toLocalDate());
+            monthlyIncomeData.putIfAbsent(ym, new double[3]); // 3 types: MINUTOS10, MINUTOS15, MINUTOS20
+            monthlyIncomeData.get(ym)[typeIndex] += reserva.getTotal();
         }
     }
+}
     public byte[] generarReporteVueltas(Date inicio, Date fin) {
-        List<ReporteEntity> reservas10 = reporteRepository.findByTipoReservaAndFechaInicioBetween(1, inicio, fin);
-        List<ReporteEntity> reservas20 = reporteRepository.findByTipoReservaAndFechaInicioBetween(2, inicio, fin);
-        List<ReporteEntity> reservas30 = reporteRepository.findByTipoReservaAndFechaInicioBetween(3, inicio, fin);
+        // Get data from reservacomprobante-service using Feign client
+        List<ReservaVueltasResponse> todasLasReservas = reservaClient.getReservasBetweenDates(inicio, fin);
+        
+        // Filter reservations by type
+        List<ReservaVueltasResponse> reservas10 = todasLasReservas.stream()
+                .filter(r -> r.getTipoReserva() == 1)
+                .collect(Collectors.toList());
+        
+        List<ReservaVueltasResponse> reservas20 = todasLasReservas.stream()
+                .filter(r -> r.getTipoReserva() == 2)
+                .collect(Collectors.toList());
+        
+        List<ReservaVueltasResponse> reservas30 = todasLasReservas.stream()
+                .filter(r -> r.getTipoReserva() == 3)
+                .collect(Collectors.toList());
 
         Map<YearMonth, double[]> monthlyIncome = new TreeMap<>(); // TreeMap to keep months sorted
 
@@ -63,6 +76,7 @@ public class ReportesService {
         processReservationsForMonthlyIncome(reservas20, 2, monthlyIncome);
         processReservationsForMonthlyIncome(reservas30, 3, monthlyIncome);
 
+        // Rest of the PDF generation code remains the same
         try {
             Document document = new Document(PageSize.A4.rotate()); // Use landscape for wider tables
             ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
@@ -152,8 +166,6 @@ public class ReportesService {
             overallGrandTotalCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
             overallGrandTotalCell.setPadding(5);
             table.addCell(overallGrandTotalCell);
-
-
             document.add(table);
             document.close();
             return pdfOutputStream.toByteArray();
@@ -171,14 +183,14 @@ public class ReportesService {
     }
 
     public byte[] generarReporteIngresosPorAsistencia(Date inicio, Date fin) {
-        List<ReporteEntity> todasLasReservas = reporteRepository.findByfechaInicioBetween(inicio, fin);
+        // Get data from reservacomprobante-service using Feign client
+        List<ReservaVueltasResponse> todasLasReservas = reservaClient.getReservasBetweenDates(inicio, fin);
+    
         final int NUM_CATEGORIES = 4;
-        // monthlyIncomeData: Key=YearMonth, Value=double array of size NUM_CATEGORIES
-        // Each element in double array stores income for that category in that month
         Map<YearMonth, double[]> monthlyIncomeData = new TreeMap<>();
-        double[] grandTotalsByCategory = new double[NUM_CATEGORIES]; // To store total income for each category
+        double[] grandTotalsByCategory = new double[NUM_CATEGORIES];
 
-        for (ReporteEntity reserva : todasLasReservas) {
+        for (ReservaVueltasResponse reserva : todasLasReservas) {
             if (reserva.getFechaInicio() != null) {
                 int categoryIndex = getCategoryIndexForAsistencia(reserva.getCantidadPersonas());
                 if (categoryIndex != -1) { // Process only if it falls into one of our categories
@@ -190,8 +202,9 @@ public class ReportesService {
             }
         }
 
+        // Rest of the PDF generation code remains the same
         try {
-            Document document = new Document(PageSize.A4.rotate()); // Landscape for wider table
+            Document document = new Document(PageSize.A4.rotate());
             ByteArrayOutputStream pdfOutputStream = new ByteArrayOutputStream();
             PdfWriter.getInstance(document, pdfOutputStream);
             document.open();

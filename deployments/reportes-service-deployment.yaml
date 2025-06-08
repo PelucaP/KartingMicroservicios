@@ -19,9 +19,8 @@ spec:
         image: pelucap/microservicios:reportes-service
         ports:
         - containerPort: 8092
+          name: http
         env:
-        - name: PORT
-          value: "8092"
         - name: SPRING_CLOUD_CONFIG_URI
           value: http://config-server:8888
         - name: SPRING_CONFIG_IMPORT
@@ -31,9 +30,11 @@ spec:
         - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
           value: "true"
         - name: EUREKA_INSTANCE_HOSTNAME
-          value: "reportes-service"
+          value: "${HOSTNAME}.reportes-service"
         - name: EUREKA_INSTANCE_INSTANCEID
-          value: "reportes-service:${HOSTNAME}"
+          value: "${HOSTNAME}:${spring.application.name}:${random.value}"
+        - name: SPRING_CLOUD_CONFIG_FAIL_FAST
+          value: "false"
 ---
 apiVersion: v1
 kind: Service
@@ -46,5 +47,5 @@ spec:
     app: reportes-service
   ports:
   - port: 80
-    targetPort: 8092
+    targetPort: http
   type: ClusterIP

@@ -1,6 +1,7 @@
 package com.example.demo.Services;
 
 import com.example.demo.DTO.ReservaRequest;
+import com.example.demo.DTO.ReservaVueltasResponse;
 import com.example.demo.DTO.TarifaResponse;
 import com.example.demo.Entities.ReservaEntity;
 import com.example.demo.Repositories.ReservaRepository;
@@ -134,6 +135,10 @@ public class ReservaService {
         return reservaRepository.save(reserva);
     }
 
+    public List<ReservaEntity> getReservasBetweenDates(Date inicio, Date fin) {
+        return reservaRepository.findByfechaInicioBetween(inicio, fin);
+    }
+
 
     public byte[] crearComprobante(ReservaEntity reserva, int idTarifaEspecial) {
         try {
@@ -169,16 +174,12 @@ public class ReservaService {
             try {
                 tarifa = tarifaClient.getTarifa(reserva.getTipoReserva());
             } catch (Exception e) {
-                // Fallback values if service is down
+                // Datos default en caso de falla de microservicio
                 tarifa = new TarifaResponse();
-                tarifa.setTipoTarifa(reserva.getTipoReserva());
-                switch(reserva.getTipoReserva()) {
-                    case 1: tarifa.setTiempoTotal(30); tarifa.setPrecioPersona(10000); break;
-                    case 2: tarifa.setTiempoTotal(45); tarifa.setPrecioPersona(15000); break;
-                    case 3: tarifa.setTiempoTotal(60); tarifa.setPrecioPersona(20000); break;
-                    default: tarifa.setTiempoTotal(30); tarifa.setPrecioPersona(10000);
+                tarifa.setTipoTarifa(1);
+                tarifa.setTiempoTotal(30);
+                tarifa.setPrecioPersona(10000);
                 }
-            }
 
             document.add(new Paragraph("Duración: " + tarifa.getTiempoTotal() + " minutos", contentFont));
 
@@ -192,6 +193,7 @@ public class ReservaService {
             document.add(new Paragraph("DETALLE DE PRECIOS", subtitleFont));
 
             // Get base tarifa price
+
             double baseTarifaPrice = tarifa.getPrecioPersona();
             document.add(new Paragraph("Precio base por persona: $" + String.format("%,.0f", baseTarifaPrice), contentFont));
 
@@ -202,7 +204,11 @@ public class ReservaService {
                 if (tarifaEspecial != 0.0 && tarifaEspecial != 1.0) {
                     document.add(new Paragraph("Tarifa especial aplicada: " + String.format("%.2f", tarifaEspecial) + "x", contentFont));
                     document.add(new Paragraph("Precio con tarifa especial: $" + String.format("%,.0f", baseTarifaPrice * tarifaEspecial), contentFont));
-                    baseTarifaPrice = baseTarifaPrice * tarifaEspecial;
+                    if(tarifaEspecial < 1){
+                        baseTarifaPrice = baseTarifaPrice * tarifaEspecial;
+                    }else{
+                        baseTarifaPrice = baseTarifaPrice * (1- tarifaEspecial);
+                    }
                 }
             } catch (Exception e) {
                 document.add(new Paragraph("No se aplicó tarifa especial", contentFont));
@@ -216,12 +222,13 @@ public class ReservaService {
             double priceAfterFrequencyDiscount = priceAllPersons;
             if (reserva.getFrecuenciaVisitas() > 2) {
                 try {
+                    //llamado al microservicio de descuento para clientes frecuentes
                     double frecuencyDiscountFactor = descuentoFrecuenciaClient.getDescuentoFrecuencia(reserva.getFrecuenciaVisitas());
                     document.add(new Paragraph("Descuento por frecuencia (" + reserva.getFrecuenciaVisitas() + " visitas): " +
-                            String.format("%.0f%%", (1-frecuencyDiscountFactor) * 100), contentFont));
+                            String.format("%.0f%%", frecuencyDiscountFactor*100), contentFont));
 
                     double casoEspecial = baseTarifaPrice * frecuencyDiscountFactor;
-                    priceAfterFrequencyDiscount = (baseTarifaPrice * reserva.getCantidadPersonas()) - tarifa.getTipoTarifa() + casoEspecial;
+                    priceAfterFrequencyDiscount = (baseTarifaPrice * reserva.getCantidadPersonas()) - baseTarifaPrice + casoEspecial;
                     document.add(new Paragraph("Precio después de descuento por frecuencia: $" +
                             String.format("%,.0f", priceAfterFrequencyDiscount), contentFont));
                 } catch (Exception e) {
@@ -268,7 +275,6 @@ public class ReservaService {
             Paragraph footer = new Paragraph("\nGracias por preferir Karting Microservicios. ¡Disfrute su experiencia!", footerFont);
             footer.setAlignment(Element.ALIGN_CENTER);
             document.add(footer);
-
             document.close();
             return pdf.toByteArray();
         } catch (Exception e) {
