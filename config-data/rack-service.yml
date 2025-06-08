@@ -18,4 +18,9 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,metrics # Expose necessary actuator endpoints
+  health:
+    readinessstate: # Required for Kubernetes readiness probes
+      enabled: true
+    livenessstate: # Required for Kubernetes liveness probes
+      enabled: true
