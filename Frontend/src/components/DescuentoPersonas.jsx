@@ -1,112 +1,151 @@
-import { useEffect, useState } from "react";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell, { tableCellClasses } from "@mui/material/TableCell";
-import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
+import { useState } from "react";
 import Paper from "@mui/material/Paper";
-import paycheckService from "../services/paycheck.service";
+import descuentoPersonasService from "../services/descuentoPersonas.service";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 
-const PaycheckList = () => {
-  const [paychecks, setPaycheck] = useState([]);
+const DescuentoPersonasComponent = () => {
+  const [personasInput, setPersonasInput] = useState("");
+  const [descuentoData, setDescuentoData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [personasConsultadas, setPersonasConsultadas] = useState(""); // New state variable
 
-  const init = () => {
-    paycheckService
-      .getAll()
-      .then((response) => {
-        console.log(
-          "Mostrando planilla de sueldos de los empleados.",
-          response.data
-        );
-        setPaycheck(response.data);
-      })
-      .catch((error) => {
-        console.log(
-          "Se ha producido un error al intentar mostrar planilla de sueldos de los empleados.",
-          error
-        );
-      });
+  const handleInputChange = (event) => {
+    setPersonasInput(event.target.value);
   };
 
-  useEffect(() => {
-    init();
-  }, []);
+  const handleConsultarDescuento = async () => {
+    if (!personasInput || isNaN(parseInt(personasInput)) || parseInt(personasInput) <= 0) {
+      setError("Por favor, ingrese un número válido de personas (mayor que 0).");
+      setDescuentoData(null);
+      setPersonasConsultadas(""); // Clear previous consulted value on error
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setDescuentoData(null);
+    // setPersonasConsultadas(""); // Clear here or only on success/error
+
+    try {
+      const response = await descuentoPersonasService.getDescuentoByPersonas(personasInput);
+      setDescuentoData(response.data);
+      setPersonasConsultadas(personasInput); // SET IT HERE
+    } catch (err) {
+      console.error("Error al obtener el descuento por personas:", err);
+      setPersonasConsultadas(""); // Clear it on error too, or if the input was invalid
+      if (err.response) {
+        if (err.response.status === 404) {
+          setError(`No se pudo calcular un descuento para ${personasInput} personas.`);
+        } else {
+          setError(
+            `Error del servidor: ${err.response.status} - ${
+              err.response.data?.message || err.response.data || "Intente nuevamente."
+            }`
+          );
+        }
+      } else if (err.request) {
+        setError(
+          "No se pudo conectar al servidor. Verifique la URL del API Gateway y que esté funcionando."
+        );
+      } else {
+        setError("Ocurrió un error al procesar la solicitud.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <TableContainer component={Paper}>
-      <h3>Planilla de sueldos</h3>
-      <hr />
-      <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-        <TableHead>
-          <TableRow>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Rut
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Año
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Mes
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Sueldo.Base
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Bonif.Salario
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Bonif.Hijos
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Bonif.HrsExtra
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Sueldo.TOTAL
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {paychecks.map((paycheck) => (
-            <TableRow
-              key={paychecks.id}
-              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-            >
-              <TableCell align="right">{paycheck.rut}</TableCell>
-              <TableCell align="right">{paycheck.year}</TableCell>
-              <TableCell align="right">{paycheck.month}</TableCell>
+    <Paper
+      sx={{
+        padding: 3,
+        margin: "auto",
+        marginTop: 4,
+        maxWidth: "md",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{ textAlign: "center", width: "100%" }}
+      >
+        Consultar Descuento por Número de Personas
+      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 2,
+          padding: 2,
+          border: "1px solid #ddd",
+          borderRadius: 1,
+          width: "fit-content",
+          marginBottom: 2,
+        }}
+      >
+        <TextField
+          label="Número de Personas"
+          variant="outlined"
+          value={personasInput}
+          onChange={handleInputChange}
+          type="number"
+          size="small"
+          sx={{ width: "100%" }}
+          inputProps={{ min: 1 }} // Basic HTML5 validation
+        />
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleConsultarDescuento}
+          disabled={isLoading}
+          sx={{ width: "auto", minWidth: "180px" }} // Adjusted width
+        >
+          {isLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            "Consultar Descuento"
+          )}
+        </Button>
+      </Box>
 
-              <TableCell align="right">
-                {new Intl.NumberFormat("es-CL", { style: "decimal" }).format(
-                  paycheck.monthlySalary
-                )}
-              </TableCell>
-              <TableCell align="right">
-                {new Intl.NumberFormat("es-CL", { style: "decimal" }).format(
-                  paycheck.salaryBonus
-                )}
-              </TableCell>
-              <TableCell align="right">
-                {new Intl.NumberFormat("es-CL", { style: "decimal" }).format(
-                  paycheck.childrenBonus
-                )}
-              </TableCell>
-              <TableCell align="right">
-                {new Intl.NumberFormat("es-CL", { style: "decimal" }).format(
-                  paycheck.extraHoursBonus
-                )}
-              </TableCell>
-              <TableCell align="right">
-                {new Intl.NumberFormat("es-CL", { style: "decimal" }).format(
-                  paycheck.totalSalary
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+      {error && (
+        <Typography
+          color="error"
+          sx={{ marginTop: 2, textAlign: "center" }}
+        >
+          {error}
+        </Typography>
+      )}
+
+      {descuentoData !== null && !isLoading && !error && personasConsultadas && ( // Check personasConsultadas
+        <Box
+          sx={{
+            marginTop: 2,
+            padding: 2,
+            border: "1px solid #ddd",
+            borderRadius: 1,
+            width: "fit-content",
+            minWidth: "300px",
+          }}
+        >
+          <Typography variant="h6">Resultado del Descuento:</Typography>
+          <Typography>
+            Para <strong>{personasConsultadas}</strong> persona(s), el descuento {/* Use personasConsultadas here */}
+            aplicable es:{" "}
+            <strong>{(descuentoData * 100).toFixed(0)}%</strong>
+          </Typography>
+        </Box>
+      )}
+    </Paper>
   );
 };
 
-export default PaycheckList;
+export default DescuentoPersonasComponent;
