@@ -62,7 +62,7 @@ export default function Sidemenu({ open, toggleDrawer }) {
           </ListItemIcon>
           <ListItemText primary="Reportes" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate("/reports/AnualReport")}>
+        <ListItemButton onClick={() => navigate("/reservas/crear")}>
           <ListItemIcon>
             <AnalyticsIcon />
           </ListItemIcon>
@@ -73,14 +73,14 @@ export default function Sidemenu({ open, toggleDrawer }) {
       <Divider />
 
       <List>
-        <ListItemButton onClick={() => navigate("/employee/discounts")}>
+        <ListItemButton onClick={() => navigate("/descuentoFrecuencia/calcular")}>
           <ListItemIcon>
             <DiscountIcon />
           </ListItemIcon>
-          <ListItemText primary="Reportes" />
+          <ListItemText primary="Descuento frecuencia" />
         </ListItemButton>
 
-        <ListItemButton onClick={() => navigate("/paycheck/vacations")}>
+        <ListItemButton onClick={() => navigate("/rack/reservas")}>
           <ListItemIcon>
             <HailIcon />
           </ListItemIcon>

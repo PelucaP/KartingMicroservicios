@@ -3,13 +3,13 @@ import {BrowserRouter as Router, Route, Routes} from 'react-router-dom'
 import Navbar from "./components/Navbar"
 import Home from './components/Home';
 import Tarifas from './components/Tarifas';
-import AddEditEmployee from './components/AddEditEmployee';
+import DescuentoFrecuencia from './components/DescuentoFrecuencia';
 import TarifasEspeciales from './components/TarifasEspeciales';
-import AddEditExtraHours from './components/AddEditExtraHours';
+import Rack from './components/RackReservas';
 import NotFound from './components/NotFound';
 import DescuentoPersonas from './components/DescuentoPersonas';
 import ReportesGenerar from './components/Reportes';
-import AnualReport from './components/AnualReport';
+import Reservas from './components/Reservas';
 
 function App() {
   return (
@@ -19,14 +19,12 @@ function App() {
             <Routes>
               <Route path="/home" element={<Home/>} />
               <Route path="/tarifas/consultar" element={<Tarifas/>} />
-              <Route path="/employee/add" element={<AddEditEmployee/>} />
-              <Route path="/employee/edit/:id" element={<AddEditEmployee/>} />
+              <Route path="/descuentoFrecuencia/calcular" element={<DescuentoFrecuencia/>} />
               <Route path="/descuentoPersonas/calcular" element={<DescuentoPersonas/>} />
               <Route path="/reportes/generar" element={<ReportesGenerar/>} />
-              <Route path="/reports/AnualReport" element={<AnualReport/>} />
+              <Route path="/reservas/crear" element={<Reservas/>} />
               <Route path="/tarifasEspeciales/consultar" element={<TarifasEspeciales/>} />
-              <Route path="/extraHours/add" element={<AddEditExtraHours/>} />
-              <Route path="/extraHours/edit/:id" element={<AddEditExtraHours/>} />
+              <Route path="/rack/reservas" element={<Rack/>} />
               <Route path="*" element={<NotFound/>} />
             </Routes>
           </div>

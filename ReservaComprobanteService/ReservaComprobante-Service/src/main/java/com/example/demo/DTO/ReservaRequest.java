@@ -16,7 +16,6 @@ public class ReservaRequest {
     private String duenoReserva;
     private int tipoReserva;
     private Date fechaReserva;
-    private int cantidadVisitas;
     private String email;
     private int tarifaEspecial;
     private int cantidadFrecuencia;
