@@ -71,3 +71,19 @@ spec:
           value: "true"
         - name: SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE
           value: "true"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reservacomprobante-service
+  labels:
+    app: reservacomprobante-service
+spec:
+  selector:
+    app: reservacomprobante-service
+  ports:
+  - port: 80 
+    targetPort: http
+    protocol: TCP
+  type: ClusterIP
