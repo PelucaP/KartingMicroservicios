@@ -1,33 +1,28 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import employeeService from "../services/employee.service";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell, { tableCellClasses } from "@mui/material/TableCell";
+import employeeService from "../services/employee.service"; // Keep if other parts of the page still use it
+import tarifaService from "../services/tarifa.service"; // Import the new tarifa service
 import TableContainer from "@mui/material/TableContainer";
-import TableHead from "@mui/material/TableHead";
-import TableRow from "@mui/material/TableRow";
 import Paper from "@mui/material/Paper";
 import Button from "@mui/material/Button";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import axios from "axios"; // For making HTTP requests
+// Remove PersonAddIcon, EditIcon, DeleteIcon if no longer used for employee list
+// import PersonAddIcon from "@mui/icons-material/PersonAdd";
+// import EditIcon from "@mui/icons-material/Edit";
+// import DeleteIcon from "@mui/icons-material/Delete";
+// Remove direct axios import if http-common is used via service
+// import axios from "axios"; 
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 
-// Configuration for the API Gateway
-// Adjust this URL if your API Gateway is accessible differently
-// For local development with port-forwarding or minikube tunnel for the gateway:
-const API_GATEWAY_URL = "http://api-gateway:8085";
-// If your frontend is running in k8s and can resolve service names,
-// you might use something like: "http://api-gateway-service-name:8085"
-// Or the specific IP: "http://10.101.84.211:8085" (ensure this is reachable from where the frontend JS executes)
+// Remove API_GATEWAY_URL if all calls go through services using http-common.js
+// const API_GATEWAY_URL = "http://api-gateway:8085"; 
 
-const EmployeeList = () => {
-  const [employees, setEmployees] = useState([]);
+// Consider renaming EmployeeList if the component's main focus is now Tarifa Inquiry
+const TarifaInquiryComponent = () => { 
+  // Remove employee state if the employee list is removed from this component
+  // const [employees, setEmployees] = useState([]); 
   const [tipoTarifaInput, setTipoTarifaInput] = useState("");
   const [tarifaData, setTarifaData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +30,8 @@ const EmployeeList = () => {
 
   const navigate = useNavigate();
 
+  // Remove init, handleDelete, handleEdit if the employee list is removed
+  /*
   const init = () => {
     employeeService
       .getAll()
@@ -51,34 +48,12 @@ const EmployeeList = () => {
   };
 
   useEffect(() => {
-    init();
+    // init(); // Remove if employee list is gone
   }, []);
 
-  const handleDelete = (id) => {
-    console.log("Printing id", id);
-    const confirmDelete = window.confirm(
-      "¿Esta seguro que desea borrar este empleado?"
-    );
-    if (confirmDelete) {
-      employeeService
-        .remove(id)
-        .then((response) => {
-          console.log("empleado ha sido eliminado.", response.data);
-          init();
-        })
-        .catch((error) => {
-          console.log(
-            "Se ha producido un error al intentar eliminar al empleado",
-            error
-          );
-        });
-    }
-  };
-
-  const handleEdit = (id) => {
-    console.log("Printing id", id);
-    navigate(`/employee/edit/${id}`);
-  };
+  const handleDelete = (id) => { ... };
+  const handleEdit = (id) => { ... };
+  */
 
   const handleInputChange = (event) => {
     setTipoTarifaInput(event.target.value);
@@ -95,10 +70,7 @@ const EmployeeList = () => {
     setTarifaData(null);
 
     try {
-      // The endpoint in your TarifaController is "api/tarifa/{tipoTarifa}"
-      const response = await axios.get(
-        `${API_GATEWAY_URL}/api/tarifa/${tipoTarifaInput}`
-      );
+      const response = await tarifaService.getTarifaByTipo(tipoTarifaInput); // Use the service
       setTarifaData(response.data);
     } catch (err) {
       console.error("Error al obtener la tarifa:", err);
@@ -108,7 +80,7 @@ const EmployeeList = () => {
         } else {
           setError(
             `Error del servidor: ${err.response.status} - ${
-              err.response.data.message || "Intente nuevamente."
+              err.response.data?.message || "Intente nuevamente." // Optional chaining for message
             }`
           );
         }
@@ -125,154 +97,91 @@ const EmployeeList = () => {
   };
 
   return (
-    <TableContainer component={Paper}>
-      <br />
-      <Link
-        to="/employee/add"
-        style={{ textDecoration: "none", marginBottom: "1rem" }}
+    // Changed to Paper to provide a distinct background for the centered content
+    <Paper sx={{ 
+        padding: 3, 
+        margin: 'auto', // For horizontal centering of the Paper itself
+        marginTop: 4, 
+        maxWidth: 'md', // Optional: constrain the max width
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center' // Center children horizontally
+      }}>
+      <Typography variant="h5" gutterBottom sx={{ textAlign: 'center', width: '100%' }}>
+        Consultar Tarifa
+      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: 'column', // Stack input and button vertically
+          alignItems: "center", // Center items in the column
+          gap: 2,
+          padding: 2, // Added padding around the input/button group
+          border: "1px solid #ddd",
+          borderRadius: 1,
+          width: 'fit-content', // Shrink to content width
+          marginBottom: 2,
+        }}
       >
+        <TextField
+          label="Tipo de Tarifa (Número)"
+          variant="outlined"
+          value={tipoTarifaInput}
+          onChange={handleInputChange}
+          type="number"
+          size="small"
+          sx={{width: '100%'}} // Make text field take available width
+        />
         <Button
           variant="contained"
           color="primary"
-          startIcon={<PersonAddIcon />}
+          onClick={handlePreguntarTarifa}
+          disabled={isLoading}
+          sx={{width: 'auto', minWidth: '150px'}} // Give button a decent width
         >
-          Añadir Empleado
+          {isLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            "Preguntar Tarifa"
+          )}
         </Button>
-      </Link>
-      <br /> <br />
-      <Table sx={{ minWidth: 650 }} size="small" aria-label="a dense table">
-        <TableHead>
-          <TableRow>
-            <TableCell align="left" sx={{ fontWeight: "bold" }}>
-              Rut
-            </TableCell>
-            <TableCell align="left" sx={{ fontWeight: "bold" }}>
-              Nombre
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Sueldo
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Nro.Hijos
-            </TableCell>
-            <TableCell align="right" sx={{ fontWeight: "bold" }}>
-              Categoria
-            </TableCell>
-            <TableCell align="left" sx={{ fontWeight: "bold" }}>
-              Operaciones
-            </TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {employees.map((employee) => (
-            <TableRow
-              key={employee.id}
-              sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-            >
-              <TableCell align="left">{employee.rut}</TableCell>
-              <TableCell align="left">{employee.name}</TableCell>
-              <TableCell align="right">{employee.salary}</TableCell>
-              <TableCell align="right">{employee.children}</TableCell>
-              <TableCell align="right">{employee.category}</TableCell>
-              <TableCell>
-                <Button
-                  variant="contained"
-                  color="info"
-                  size="small"
-                  onClick={() => handleEdit(employee.id)}
-                  style={{ marginLeft: "0.5rem" }}
-                  startIcon={<EditIcon />}
-                >
-                  Editar
-                </Button>
+      </Box>
 
-                <Button
-                  variant="contained"
-                  color="error"
-                  size="small"
-                  onClick={() => handleDelete(employee.id)}
-                  style={{ marginLeft: "0.5rem" }}
-                  startIcon={<DeleteIcon />}
-                >
-                  Eliminar
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      <Box
-        sx={{
-          marginTop: 4,
-          padding: 3,
-          border: "1px solid #ddd",
-          borderRadius: 1,
-        }}
-      >
-        <Typography variant="h6" gutterBottom>
-          Consultar Tarifa
+      {error && (
+        <Typography color="error" sx={{ marginTop: 2, textAlign: 'center' }}>
+          {error}
         </Typography>
+      )}
+
+      {tarifaData && (
         <Box
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            marginBottom: 2,
+            marginTop: 2,
+            padding: 2,
+            border: "1px solid #ddd",
+            borderRadius: 1,
+            width: 'fit-content', // Shrink to content
+            minWidth: '300px' // Ensure it has some minimum width
           }}
         >
-          <TextField
-            label="Tipo de Tarifa (Número)"
-            variant="outlined"
-            value={tipoTarifaInput}
-            onChange={handleInputChange}
-            type="number"
-            size="small"
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handlePreguntarTarifa}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              "Preguntar Tarifa"
-            )}
-          </Button>
-        </Box>
-
-        {error && (
-          <Typography color="error" sx={{ marginTop: 2 }}>
-            {error}
+          <Typography variant="h6">Detalles de la Tarifa:</Typography>
+          <Typography>
+            <strong>Tipo de Tarifa:</strong> {tarifaData.tipoTarifa}
           </Typography>
-        )}
-
-        {tarifaData && (
-          <Box
-            sx={{
-              marginTop: 3,
-              padding: 2,
-              border: "1px solid #ddd",
-              borderRadius: 1,
-            }}
-          >
-            <Typography variant="h6">Detalles de la Tarifa:</Typography>
-            <Typography>
-              <strong>Tipo de Tarifa:</strong> {tarifaData.tipoTarifa}
-            </Typography>
-            <Typography>
-              <strong>Tiempo Total (minutos):</strong> {tarifaData.tiempoTotal}
-            </Typography>
-            <Typography>
-              <strong>Precio por Persona:</strong> ${tarifaData.precioPersona}
-            </Typography>
-          </Box>
-        )}
-      </Box>
-    </TableContainer>
+          <Typography>
+            <strong>Tiempo Total (minutos):</strong> {tarifaData.tiempoTotal}
+          </Typography>
+          <Typography>
+            <strong>Precio por Persona:</strong> ${tarifaData.precioPersona}
+          </Typography>
+        </Box>
+      )}
+      {/* The TableContainer for employees is removed. If you still need it, 
+          you'll need to manage its state and rendering separately. */}
+    </Paper>
   );
 };
 
-export default EmployeeList;
+// If you renamed the component, update the export
+export default TarifaInquiryComponent; 
+// export default EmployeeList; // If you kept the old name

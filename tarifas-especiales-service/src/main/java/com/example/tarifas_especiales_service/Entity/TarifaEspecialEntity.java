@@ -11,5 +11,5 @@ public class TarifaEspecialEntity {
     @Column(nullable = false,unique = true)
     Long id;
     String tipoTarifa;
-    double descuento;
+    double descuento;   
 }

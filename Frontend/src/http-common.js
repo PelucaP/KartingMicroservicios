@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const payrollBackendServer = import.meta.env.VITE_PAYROLL_BACKEND_SERVER;
-const payrollBackendPort = import.meta.env.VITE_PAYROLL_BACKEND_PORT;
+const payrollBackendServer = import.meta.env.VITE_BACKEND_SERVER;
+const payrollBackendPort = import.meta.env.VITE_BACKEND_PORT;
 
 console.log(payrollBackendServer)
 console.log(payrollBackendPort)
